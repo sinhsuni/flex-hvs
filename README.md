@@ -59,6 +59,64 @@ Step 5: YOu can use step 4 output to publish your Flex plugin.
     twilio flex:plugins:release --plugin flex-hvs@1.0.0 --name "HVS Release" --description "The description of this Flex Plugin Configuration."
 ```
 
+Step 6: Go to your Salesforce HVS instance and find out which field are you using to track sales cadence while creating task. For this sample code, I have created a single picklist field on Activity object, label "Call Result" and API Name is "Call_Result__c". Make sure that you have added all the oprtions you are using to branching your sales cadence,
+
+Step 7:Open Salesforce Developer Console and add following APEX code.
+```bash
+    public class TaskHelper {
+    
+     public static Task createTask(String phoneNumber, string direction, string channel, string sid) {
+        //Fetch information about contact, modify query if needed
+        if(phoneNumber == null) {
+            return null;
+        }
+        
+        Contact sObjectContact = [
+            Select Id, Firstname, OwnerId 
+            From Contact
+            Where MobilePhone =: phoneNumber OR Phone =: phoneNumber
+            Limit 1
+        ];
+        if(sObjectContact != null){
+            Task sObjectTask = new Task();
+			sObjectTask.Subject = direction + 'call - on ' + date.today().format();
+			sObjectTask.Status = 'Open';
+            sObjectTask.ActivityDate = date.today();
+			sObjectTask.Priority = 'Normal';
+			sObjectTask.WhoId = sObjectContact.ID;
+			sObjectTask.OwnerId = sObjectContact.OwnerId;
+            sObjectTask.CallObject = sid;
+			insert sObjectTask;
+            
+            return sObjectTask;
+        }
+        
+        return null;
+        
+    }
+    
+    public static Task fatchDesposition(String taskId) {
+        //Fetch information about contact, modify query if needed
+        if(taskId == null) {
+            return null;
+        }
+        Task sObjectTask = [
+            Select Id, Call_Result__c  
+            From Task
+            Where Id =: taskId
+            Limit 1
+        ];
+        
+        return sObjectTask;
+    }
+
+}
+```
+
+
+
+
+
 
 
 
